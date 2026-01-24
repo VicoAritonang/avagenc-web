@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
 import Navbar from '../components/Navbar'
@@ -5,6 +6,20 @@ import { motion } from 'framer-motion'
 import { Sparkles, Zap, Shield, Cpu, Mail, MessageSquare, Calendar } from 'lucide-react'
 
 export default function Landing() {
+    useEffect(() => {
+        document.title = "Avagenc - All in One AI Assistant"
+
+        const metaDesc = document.querySelector('meta[name="description"]')
+        if (metaDesc) {
+            metaDesc.setAttribute("content", "Avagenc adalah All in One AI Assistant yang terintegrasi. Otomasi tugas, manajemen email, dan tingkatkan produktivitas Anda dengan kecerdasan buatan.")
+        } else {
+            const tempMeta = document.createElement('meta');
+            tempMeta.name = "description";
+            tempMeta.content = "Avagenc adalah All in One AI Assistant yang terintegrasi. Otomasi tugas, manajemen email, dan tingkatkan produktivitas Anda dengan kecerdasan buatan.";
+            document.head.appendChild(tempMeta);
+        }
+    }, [])
+
     return (
         <div className="min-h-screen">
             <Navbar />
@@ -217,5 +232,3 @@ export default function Landing() {
         </div>
     )
 }
-
-
