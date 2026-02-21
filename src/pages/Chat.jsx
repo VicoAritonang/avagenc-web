@@ -4,9 +4,9 @@ import { supabase } from '../lib/supabase'
 import ChatInput from '../components/chat/ChatInput'
 import Message from '../components/chat/Message'
 import { Button } from '../components/ui/button'
-import { Link } from 'react-router-dom'
-import { Menu, X, LogOut, ChevronUp, FlaskConical, Rocket } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Menu, X, ChevronUp, FlaskConical, Rocket } from 'lucide-react'
+import { motion } from 'framer-motion'
+import Sidebar from '../components/layout/Sidebar'
 
 export default function Chat() {
     const [messages, setMessages] = useState([])
@@ -217,71 +217,8 @@ export default function Chat() {
 
     return (
         <div className="h-screen flex">
-            {/* Sidebar */}
-            <AnimatePresence>
-                {sidebarOpen && (
-                    <motion.div
-                        initial={{ x: -300 }}
-                        animate={{ x: 0 }}
-                        exit={{ x: -300 }}
-                        transition={{ duration: 0.3 }}
-                        className="fixed md:relative w-64 h-full glass-card border-r border-white/10 z-40"
-                    >
-                        <div className="p-4 flex flex-col h-full">
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-2">
-                                    <img src="/avagenc.png" alt="Avagenc Logo" className="w-6 h-6" />
-                                    <span className="font-bold text-xl gradient-text">Avagenc</span>
-                                </div>
-                                <button
-                                    onClick={() => setSidebarOpen(false)}
-                                    className="md:hidden text-gray-400 hover:text-white"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="flex-1 space-y-2">
-                                <Link to="/dashboard">
-                                    <Button variant="ghost" className="w-full justify-start">
-                                        Dashboard
-                                    </Button>
-                                </Link>
-                                <Link to="/chat">
-                                    <Button variant="secondary" className="w-full justify-start">
-                                        Chat
-                                    </Button>
-                                </Link>
-                                <Link to="/dashboard/services">
-                                    <Button variant="ghost" className="w-full justify-start">
-                                        Services
-                                    </Button>
-                                </Link>
-                                <Link to="/dashboard/billing">
-                                    <Button variant="ghost" className="w-full justify-start">
-                                        Billing
-                                    </Button>
-                                </Link>
-                            </div>
-
-                            <div className="border-t border-white/10 pt-4">
-                                <div className="mb-4 px-3">
-                                    <p className="text-sm text-gray-400">Logged in as</p>
-                                    <p className="text-sm text-white truncate">{user?.email}</p>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start text-red-400 hover:text-red-300"
-                                    onClick={handleLogout}
-                                >
-                                    <LogOut className="w-4 h-4 mr-2" />
-                                    Sign Out
-                                </Button>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Sidebar Component */}
+            <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col">

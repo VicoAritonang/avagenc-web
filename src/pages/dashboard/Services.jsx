@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useGmailConnection } from '../../hooks/useGmailConnection'
+import { useCalendarConnection } from '../../hooks/useCalendarConnection'
 import ServiceCard from '../../components/dashboard/ServiceCard'
 import GmailOAuth from '../../components/services/GmailOAuth'
+import toast from 'react-hot-toast'
 import DisconnectDialog from '../../components/services/DisconnectDialog'
 import { motion } from 'framer-motion'
 import { Sparkles, CheckCircle } from 'lucide-react'
@@ -12,17 +14,32 @@ import { Sparkles, CheckCircle } from 'lucide-react'
 export default function Services() {
     const navigate = useNavigate()
     const { user } = useAuth()
+    const [searchParams] = useSearchParams()
     const [services, setServices] = useState([])
     const [activeServices, setActiveServices] = useState([])
     const [availableServices, setAvailableServices] = useState([])
     const [showGmailDialog, setShowGmailDialog] = useState(false)
     const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
     const [selectedService, setSelectedService] = useState(null)
-    const { connection: gmailConnection, connect: connectGmail, disconnect: disconnectGmail, refetch } = useGmailConnection()
+    const [isDisconnecting, setIsDisconnecting] = useState(false)
+    const { connection: gmailConnection, connect: connectGmail, disconnect: disconnectGmail, refetch: refetchGmail } = useGmailConnection()
+    const { connection: calendarConnection, connect: connectCalendar, disconnect: disconnectCalendar, refetch: refetchCalendar } = useCalendarConnection()
+
+    useEffect(() => {
+        if (searchParams.get('connected') === 'gmail') {
+            toast.success('Successfully connected to Gmail')
+            refetchGmail()
+            navigate('/dashboard/services', { replace: true })
+        } else if (searchParams.get('connected') === 'calendar') {
+            toast.success('Successfully connected to Calendar')
+            refetchCalendar()
+            navigate('/dashboard/services', { replace: true })
+        }
+    }, [searchParams, navigate, refetchGmail, refetchCalendar])
 
     useEffect(() => {
         fetchServices()
-    }, [gmailConnection])
+    }, [gmailConnection, calendarConnection])
 
     const fetchServices = async () => {
         // Fetch all services
@@ -43,6 +60,10 @@ export default function Services() {
                     active.push({ ...service, connection: gmailConnection })
                 } else if (service.name.toLowerCase() === 'gmail' && !gmailConnection) {
                     available.push({ ...service, connection: null })
+                } else if (service.name.toLowerCase() === 'calendar' && calendarConnection) {
+                    active.push({ ...service, connection: calendarConnection })
+                } else if (service.name.toLowerCase() === 'calendar' && !calendarConnection) {
+                    available.push({ ...service, connection: null })
                 } else {
                     // For future services
                     available.push({ ...service, connection: null })
@@ -58,6 +79,9 @@ export default function Services() {
         if (service.name.toLowerCase() === 'gmail') {
             localStorage.setItem('gmail_return_to', '/dashboard/services')
             setShowGmailDialog(true)
+        } else if (service.name.toLowerCase() === 'calendar') {
+            localStorage.setItem('calendar_return_to', '/dashboard/services')
+            connectCalendar()
         }
     }
 
@@ -67,11 +91,27 @@ export default function Services() {
     }
 
     const confirmDisconnect = async () => {
-        if (selectedService?.name.toLowerCase() === 'gmail') {
-            await disconnectGmail()
-            refetch()
+        if (!selectedService) return
+
+        setIsDisconnecting(true)
+        try {
+            if (selectedService.name.toLowerCase() === 'gmail') {
+                await disconnectGmail()
+                refetchGmail()
+                toast.success('Gmail disconnected successfully!')
+            } else if (selectedService.name.toLowerCase() === 'calendar') {
+                await disconnectCalendar()
+                refetchCalendar()
+                toast.success('Calendar disconnected successfully!')
+            }
+        } catch (error) {
+            console.error('Error disconnecting service:', error)
+            toast.error('Failed to disconnect service.')
+        } finally {
+            setSelectedService(null)
+            setShowDisconnectDialog(false)
+            setIsDisconnecting(false)
         }
-        setSelectedService(null)
     }
 
     const handleViewDetail = (service) => {

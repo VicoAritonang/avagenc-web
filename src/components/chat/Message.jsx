@@ -1,10 +1,18 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { User, Sparkles } from 'lucide-react'
+import { User, Sparkles, Copy, Check } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { formatDate } from '../../lib/utils'
 
 export default function Message({ message }) {
+    const [copied, setCopied] = useState(false)
     const isUser = message.role === 'user'
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(message.content)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
 
     return (
         <motion.div
@@ -28,9 +36,9 @@ export default function Message({ message }) {
             </div>
 
             {/* Message Content */}
-            <div className={`flex-1 max-w-[80%] ${isUser ? 'items-end' : ''}`}>
+            <div className={`flex-1 max-w-[80%] ${isUser ? 'items-end' : ''} group relative`}>
                 <div
-                    className={`glass-card p-4 ${isUser
+                    className={`glass-card p-4 relative ${isUser
                         ? 'bg-gradient-to-br from-blue-600/20 to-cyan-600/15 border-blue-500/30'
                         : 'bg-gradient-to-br from-slate-700/30 to-slate-800/30 border-slate-600/30'
                         }`}
@@ -61,7 +69,21 @@ export default function Message({ message }) {
                         )}
                     </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 px-1">
+
+                {/* Copy Button */}
+                <button
+                    onClick={handleCopy}
+                    className={`absolute ${isUser ? '-left-10 top-2' : '-right-10 top-2'} p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white transition-all opacity-0 group-hover:opacity-100`}
+                    title="Copy response"
+                >
+                    {copied ? (
+                        <Check className="w-4 h-4 text-green-400" />
+                    ) : (
+                        <Copy className="w-4 h-4" />
+                    )}
+                </button>
+
+                <p className={`text-xs text-gray-500 mt-1 px-1 ${isUser ? 'text-right' : 'text-left'}`}>
                     {formatDate(message.timestamp)}
                 </p>
             </div>

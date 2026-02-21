@@ -65,12 +65,17 @@ export default function Dashboard() {
         // Count active services
         const { data: gmailConnection } = await supabase
             .from('gmail_connect')
-            .select('*')
+            .select('id')
+            .eq('user_id', user.id)
+
+        const { data: calendarConnection } = await supabase
+            .from('calendar_connect')
+            .select('id')
             .eq('user_id', user.id)
 
         setStats(prev => ({
             ...prev,
-            activeServices: gmailConnection?.length || 0
+            activeServices: (gmailConnection?.length || 0) + (calendarConnection?.length || 0)
         }))
     }
 

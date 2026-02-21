@@ -1,58 +1,97 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft, CheckCircle2, AlertCircle, Settings2, Trash2, Mail, Users, MessageSquare, Plus, Activity } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { useGmailConnection } from '../../hooks/useGmailConnection'
+import { useCalendarConnection } from '../../hooks/useCalendarConnection'
 import GmailOAuth from '../../components/services/GmailOAuth'
 import DisconnectDialog from '../../components/services/DisconnectDialog'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CheckCircle, Circle, Mail } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function ServiceDetail() {
     const { serviceName } = useParams()
     const navigate = useNavigate()
+    const { user } = useAuth()
+
+    // States
     const [service, setService] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [isConnecting, setIsConnecting] = useState(false)
+    const [isDisconnecting, setIsDisconnecting] = useState(false)
     const [showGmailDialog, setShowGmailDialog] = useState(false)
     const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
-    const { connection: gmailConnection, connect: connectGmail, disconnect: disconnectGmail, refetch } = useGmailConnection()
+
+    // Connections
+    const { connection: gmailConnection, connect: connectGmail, disconnect: disconnectGmail, refetch: refetchGmail } = useGmailConnection()
+    const { connection: calendarConnection, connect: connectCalendar, disconnect: disconnectCalendar, refetch: refetchCalendar } = useCalendarConnection()
 
     useEffect(() => {
-        fetchService()
-    }, [serviceName, gmailConnection])
+        fetchServiceDetails()
+    }, [serviceName, gmailConnection, calendarConnection])
 
-    const fetchService = async () => {
+    const fetchServiceDetails = async () => {
         setLoading(true)
-        const { data } = await supabase
-            .from('services')
-            .select('*')
-            .ilike('name', serviceName)
-            .single()
+        if (!serviceName) {
+            setLoading(false)
+            return
+        }
+        try {
+            const { data, error } = await supabase
+                .from('services')
+                .select('*')
+                .ilike('name', serviceName)
+                .single()
 
-        if (data) {
+            if (error) {
+                throw error
+            }
             setService(data)
+        } catch (error) {
+            console.error('Error fetching service:', error)
+            toast.error('Failed to load service details.')
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
     }
 
-    const isConnected = serviceName?.toLowerCase() === 'gmail' && gmailConnection
+    const isConnected =
+        (serviceName?.toLowerCase() === 'gmail' && gmailConnection) ||
+        (serviceName?.toLowerCase() === 'calendar' && calendarConnection)
 
-    const handleConnect = () => {
+    const handleConnectClick = () => {
         if (serviceName?.toLowerCase() === 'gmail') {
-            localStorage.setItem('gmail_return_to', `/dashboard/services/${serviceName}`)
+            localStorage.setItem('gmail_return_to', '/dashboard/services/' + serviceName)
             setShowGmailDialog(true)
+        } else if (serviceName?.toLowerCase() === 'calendar') {
+            localStorage.setItem('calendar_return_to', '/dashboard/services/' + serviceName)
+            connectCalendar()
         }
     }
 
-    const handleDisconnect = async () => {
+    const handleDisconnectClick = () => { // Changed to not be async directly
         setShowDisconnectDialog(true)
     }
 
-    const confirmDisconnect = async () => {
-        if (serviceName?.toLowerCase() === 'gmail') {
-            await disconnectGmail()
-            refetch()
+    const confirmDisconnect = async () => { // New function for confirmation
+        setIsDisconnecting(true)
+        try {
+            if (serviceName?.toLowerCase() === 'gmail') {
+                await disconnectGmail()
+                refetchGmail()
+            } else if (serviceName?.toLowerCase() === 'calendar') {
+                await disconnectCalendar()
+                refetchCalendar()
+            }
+            toast.success('Successfully disconnected ' + service.name)
+        } catch (error) {
+            toast.error('Failed to disconnect ' + service.name)
+        } finally {
+            setIsDisconnecting(false)
+            setShowDisconnectDialog(false)
         }
     }
 
@@ -68,13 +107,13 @@ export default function ServiceDetail() {
         // Handle youtube.com/watch?v=VIDEO_ID
         const watchMatch = url.match(/[?&]v=([^&]+)/)
         if (watchMatch) {
-            return `https://www.youtube.com/embed/${watchMatch[1]}`
+            return 'https://www.youtube.com/embed/' + watchMatch[1]
         }
 
         // Handle youtu.be/VIDEO_ID
         const shortMatch = url.match(/youtu\.be\/([^?&]+)/)
         if (shortMatch) {
-            return `https://www.youtube.com/embed/${shortMatch[1]}`
+            return 'https://www.youtube.com/embed/' + shortMatch[1]
         }
 
         // If already embed URL, return as is
@@ -127,24 +166,30 @@ export default function ServiceDetail() {
                 {/* Header with Status */}
                 <div className="flex items-start justify-between gap-6 flex-wrap">
                     <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">{service.name}</h1>
-                        <div className="flex items-center gap-2">
+                        <h1 className="text-3xl font-bold text-white tracking-tight">{service.name}</h1>
+
+                        <div className="flex items-center gap-2 mt-2">
                             {isConnected ? (
-                                <>
-                                    <CheckCircle className="w-5 h-5 text-green-400" />
-                                    <span className="text-green-400 font-medium">Connected</span>
-                                    {gmailConnection?.gmail && (
-                                        <>
-                                            <span className="text-gray-600">•</span>
-                                            <Mail className="w-4 h-4 text-gray-400" />
-                                            <span className="text-gray-400">{gmailConnection.gmail}</span>
-                                        </>
-                                    )}
-                                </>
+                                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                    <span className="text-sm text-green-400 font-medium">Connected</span>
+                                </div>
                             ) : (
+                                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-500/10 border border-gray-500/20">
+                                    <div className="w-2 h-2 rounded-full bg-gray-500" />
+                                    <span className="text-sm text-gray-400 font-medium">Not Connected</span>
+                                </div>
+                            )}
+                            {serviceName?.toLowerCase() === 'gmail' && gmailConnection?.gmail && (
                                 <>
-                                    <Circle className="w-5 h-5 text-gray-400" />
-                                    <span className="text-gray-400">Not connected</span>
+                                    <span className="text-gray-600">•</span>
+                                    <span className="text-gray-400">{gmailConnection.gmail}</span>
+                                </>
+                            )}
+                            {serviceName?.toLowerCase() === 'calendar' && calendarConnection?.gmail && (
+                                <>
+                                    <span className="text-gray-600">•</span>
+                                    <span className="text-gray-400">{calendarConnection.gmail}</span>
                                 </>
                             )}
                         </div>
@@ -152,11 +197,11 @@ export default function ServiceDetail() {
 
                     {/* Connect/Disconnect Button */}
                     {isConnected ? (
-                        <Button variant="destructive" onClick={handleDisconnect}>
-                            Disconnect
+                        <Button variant="destructive" onClick={handleDisconnectClick} disabled={isDisconnecting}>
+                            {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
                         </Button>
                     ) : (
-                        <Button onClick={handleConnect}>
+                        <Button onClick={handleConnectClick}>
                             Connect {service.name}
                         </Button>
                     )}
@@ -223,7 +268,7 @@ export default function ServiceDetail() {
                                             key={scope}
                                             className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-medium ${scopeColors[scope] || 'bg-gray-500/80'}`}
                                         >
-                                            <CheckCircle className="w-4 h-4" />
+                                            <CheckCircle2 className="w-4 h-4" />
                                             <span className="capitalize">{scope}</span>
                                         </span>
                                     )
@@ -251,5 +296,3 @@ export default function ServiceDetail() {
         </div>
     )
 }
-
-
