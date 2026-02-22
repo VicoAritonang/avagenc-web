@@ -54,6 +54,10 @@ export default function CalendarCallback() {
             })
             const userInfo = await userInfoResponse.json()
 
+            // Get scopes from localStorage
+            const scopes = localStorage.getItem('calendar_scopes') || 'read'
+            localStorage.removeItem('calendar_scopes')
+
             // Save to database
             const { error: dbError } = await supabase
                 .from('calendar_connect')
@@ -61,6 +65,7 @@ export default function CalendarCallback() {
                     user_id: user.id,
                     gmail: userInfo.email,
                     refresh_token: tokens.refresh_token,
+                    scope: scopes,
                     created_at: new Date().toISOString()
                 }, {
                     onConflict: 'user_id'

@@ -25,15 +25,23 @@ export const useCalendarConnection = () => {
         setLoading(false)
     }
 
-    const connect = async () => {
+    const connect = async (scopes) => {
         if (!user) return { error: 'User not authenticated' }
+
+        // Store selected scopes in localStorage for callback
+        localStorage.setItem('calendar_scopes', scopes.join(';'))
 
         // Get OAuth URL
         const clientId = import.meta.env.VITE_CALENDAR_PROJECT_ID
         const redirectUri = `${window.location.origin}/auth/callback/calendar`
 
-        // Hardcoded scopes for Calendar: read, write, and modify
-        const selectedScopes = 'https://www.googleapis.com/auth/calendar'
+        // Map scopes to Calendar API scopes
+        const scopeMap = {
+            'read': 'https://www.googleapis.com/auth/calendar.readonly',
+            'write': 'https://www.googleapis.com/auth/calendar.events'
+        }
+
+        const selectedScopes = scopes.map(s => scopeMap[s]).join(' ')
 
         // Add email scope to get the user's email address
         const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(selectedScopes + ' https://www.googleapis.com/auth/userinfo.email')}&access_type=offline&prompt=consent`

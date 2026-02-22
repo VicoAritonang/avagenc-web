@@ -4,8 +4,8 @@ import { ArrowLeft, CheckCircle2, AlertCircle, Settings2, Trash2, Mail, Users, M
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { useGmailConnection } from '../../hooks/useGmailConnection'
-import { useCalendarConnection } from '../../hooks/useCalendarConnection'
 import GmailOAuth from '../../components/services/GmailOAuth'
+import CalendarOAuth from '../../components/services/CalendarOAuth'
 import DisconnectDialog from '../../components/services/DisconnectDialog'
 import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
@@ -23,6 +23,7 @@ export default function ServiceDetail() {
     const [isConnecting, setIsConnecting] = useState(false)
     const [isDisconnecting, setIsDisconnecting] = useState(false)
     const [showGmailDialog, setShowGmailDialog] = useState(false)
+    const [showCalendarDialog, setShowCalendarDialog] = useState(false)
     const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
 
     // Connections
@@ -68,7 +69,7 @@ export default function ServiceDetail() {
             setShowGmailDialog(true)
         } else if (serviceName?.toLowerCase() === 'calendar') {
             localStorage.setItem('calendar_return_to', '/dashboard/services/' + serviceName)
-            connectCalendar()
+            setShowCalendarDialog(true)
         }
     }
 
@@ -98,6 +99,11 @@ export default function ServiceDetail() {
     const handleGmailConnect = (scopes) => {
         setShowGmailDialog(false)
         connectGmail(scopes)
+    }
+
+    const handleCalendarConnect = (scopes) => {
+        setShowCalendarDialog(false)
+        connectCalendar(scopes)
     }
 
     // Convert YouTube URL to embed format
@@ -277,6 +283,32 @@ export default function ServiceDetail() {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Connected Scopes (if Calendar is connected) */}
+                {isConnected && calendarConnection?.scope && (
+                    <Card>
+                        <CardContent className="p-8">
+                            <h2 className="text-2xl font-semibold text-white mb-4">Granted Permissions</h2>
+                            <div className="flex flex-wrap gap-2">
+                                {calendarConnection.scope.split(';').filter(Boolean).map((scope) => {
+                                    const scopeColors = {
+                                        read: 'bg-blue-500/80',
+                                        write: 'bg-green-500/80'
+                                    }
+                                    return (
+                                        <span
+                                            key={scope}
+                                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-white font-medium ${scopeColors[scope] || 'bg-gray-500/80'}`}
+                                        >
+                                            <CheckCircle2 className="w-4 h-4" />
+                                            <span className="capitalize">{scope}</span>
+                                        </span>
+                                    )
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </motion.div>
 
             {/* Gmail OAuth Dialog */}
@@ -284,6 +316,13 @@ export default function ServiceDetail() {
                 open={showGmailDialog}
                 onOpenChange={setShowGmailDialog}
                 onConnect={handleGmailConnect}
+            />
+
+            {/* Calendar OAuth Dialog */}
+            <CalendarOAuth
+                open={showCalendarDialog}
+                onOpenChange={setShowCalendarDialog}
+                onConnect={handleCalendarConnect}
             />
 
             {/* Disconnect Confirmation Dialog */}
