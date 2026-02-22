@@ -198,7 +198,7 @@ export default function Contacts() {
                     <h1 className="text-3xl font-bold text-white mb-2">Contacts</h1>
                     <p className="text-gray-400">Kelola informasi kontak Gmail beserta WhatsApp Anda</p>
                 </div>
-                <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90">
+                <Button onClick={() => handleOpenDialog()} className="bg-primary hover:bg-primary/90 text-white">
                     <Plus className="w-5 h-5 mr-2" />
                     Tambah Kontak
                 </Button>
@@ -222,7 +222,7 @@ export default function Contacts() {
                     <p className="text-gray-400 max-w-sm mx-auto mb-6">
                         Anda belum menambahkan informasi kontak apapun. Tambahkan kontak pertama Anda sekarang.
                     </p>
-                    <Button onClick={() => handleOpenDialog()} variant="outline">
+                    <Button onClick={() => handleOpenDialog()} variant="outline" className="text-white hover:text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Tambah Kontak
                     </Button>
