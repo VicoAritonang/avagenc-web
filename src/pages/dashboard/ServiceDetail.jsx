@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, AlertCircle, Settings2, Trash2, Mail, Users, M
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { useGmailConnection } from '../../hooks/useGmailConnection'
+import { useCalendarConnection } from '../../hooks/useCalendarConnection'
 import GmailOAuth from '../../components/services/GmailOAuth'
 import CalendarOAuth from '../../components/services/CalendarOAuth'
 import DisconnectDialog from '../../components/services/DisconnectDialog'
