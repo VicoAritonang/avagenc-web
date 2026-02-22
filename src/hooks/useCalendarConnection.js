@@ -15,21 +15,26 @@ export const useCalendarConnection = () => {
         if (!user) return
 
         setLoading(true)
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('calendar_connect')
             .select('*')
             .eq('user_id', user.id)
-            .single()
+            .maybeSingle()
+
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error fetching calendar connection:', error)
+        }
 
         setConnection(data)
         setLoading(false)
     }
 
-    const connect = async (scopes) => {
+    const connect = async (scopes = ['read']) => {
         if (!user) return { error: 'User not authenticated' }
 
         // Store selected scopes in localStorage for callback
-        localStorage.setItem('calendar_scopes', scopes.join(';'))
+        const scopeArray = Array.isArray(scopes) ? scopes : ['read'];
+        localStorage.setItem('calendar_scopes', scopeArray.join(';'))
 
         // Get OAuth URL
         const clientId = import.meta.env.VITE_CALENDAR_PROJECT_ID
@@ -41,7 +46,7 @@ export const useCalendarConnection = () => {
             'write': 'https://www.googleapis.com/auth/calendar.events'
         }
 
-        const selectedScopes = scopes.map(s => scopeMap[s]).join(' ')
+        const selectedScopes = scopeArray.map(s => scopeMap[s] || scopeMap['read']).join(' ')
 
         // Add email scope to get the user's email address
         const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(selectedScopes + ' https://www.googleapis.com/auth/userinfo.email')}&access_type=offline&prompt=consent`
