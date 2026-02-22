@@ -26,21 +26,17 @@ export default function CalendarCallback() {
 
         try {
             // Exchange code for tokens
-            const clientId = import.meta.env.VITE_CALENDAR_PROJECT_ID
-            const clientSecret = import.meta.env.VITE_CALENDAR_PROJECT_SECRET
             const redirectUri = `${window.location.origin}/auth/callback/calendar`
 
-            const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+            const tokenResponse = await fetch('/api/auth/token', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: new URLSearchParams({
+                body: JSON.stringify({
                     code,
-                    client_id: clientId,
-                    client_secret: clientSecret,
                     redirect_uri: redirectUri,
-                    grant_type: 'authorization_code'
+                    service: 'calendar'
                 })
             })
 
