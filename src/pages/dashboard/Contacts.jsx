@@ -125,15 +125,13 @@ export default function Contacts() {
                 if (error) throw error
                 toast.success('Kontak berhasil diperbarui')
             } else {
-                // Create
                 const { error } = await supabase
                     .from('user_contact')
                     .insert([contactData])
 
                 if (error) {
-                    // Assuming duplicate key means they can only have one if user_id is true PK
                     if (error.code === '23505') {
-                        throw new Error('Anda sudah memiliki kontak. Gunakan tombol Edit untuk mengubah kontak Anda.')
+                        throw new Error('Data kontak ini bertabrakan dengan data yang sudah ada (duplikat).')
                     }
                     throw error
                 }
