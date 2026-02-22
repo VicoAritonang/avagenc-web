@@ -6,6 +6,7 @@ import { useGmailConnection } from '../../hooks/useGmailConnection'
 import { useCalendarConnection } from '../../hooks/useCalendarConnection'
 import ServiceCard from '../../components/dashboard/ServiceCard'
 import GmailOAuth from '../../components/services/GmailOAuth'
+import CalendarOAuth from '../../components/services/CalendarOAuth'
 import toast from 'react-hot-toast'
 import DisconnectDialog from '../../components/services/DisconnectDialog'
 import { motion } from 'framer-motion'
@@ -19,6 +20,7 @@ export default function Services() {
     const [activeServices, setActiveServices] = useState([])
     const [availableServices, setAvailableServices] = useState([])
     const [showGmailDialog, setShowGmailDialog] = useState(false)
+    const [showCalendarDialog, setShowCalendarDialog] = useState(false)
     const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
     const [selectedService, setSelectedService] = useState(null)
     const [isDisconnecting, setIsDisconnecting] = useState(false)
@@ -81,7 +83,7 @@ export default function Services() {
             setShowGmailDialog(true)
         } else if (service.name.toLowerCase() === 'calendar') {
             localStorage.setItem('calendar_return_to', '/dashboard/services')
-            connectCalendar()
+            setShowCalendarDialog(true)
         }
     }
 
@@ -121,6 +123,11 @@ export default function Services() {
     const handleGmailConnect = (scopes) => {
         setShowGmailDialog(false)
         connectGmail(scopes)
+    }
+
+    const handleCalendarConnect = (scopes) => {
+        setShowCalendarDialog(false)
+        connectCalendar(scopes)
     }
 
     return (
@@ -198,6 +205,13 @@ export default function Services() {
                 open={showGmailDialog}
                 onOpenChange={setShowGmailDialog}
                 onConnect={handleGmailConnect}
+            />
+
+            {/* Calendar OAuth Dialog */}
+            <CalendarOAuth
+                open={showCalendarDialog}
+                onOpenChange={setShowCalendarDialog}
+                onConnect={handleCalendarConnect}
             />
 
             {/* Disconnect Confirmation Dialog */}

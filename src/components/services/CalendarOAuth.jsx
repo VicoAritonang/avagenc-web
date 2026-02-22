@@ -50,13 +50,10 @@ export default function CalendarOAuth({ open, onOpenChange, onConnect }) {
                                 onClick={(e) => e.stopPropagation()}
                             />
                             <div className="flex-1">
-                                <Label
-                                    htmlFor={scope.id}
-                                    className="text-base font-medium text-white cursor-pointer"
-                                >
+                                <div className="text-base font-medium text-white cursor-pointer select-none">
                                     {scope.label}
-                                </Label>
-                                <p className="text-sm text-gray-400 mt-1">{scope.description}</p>
+                                </div>
+                                <p className="text-sm text-gray-400 mt-1 select-none">{scope.description}</p>
                             </div>
                         </div>
                     ))}
